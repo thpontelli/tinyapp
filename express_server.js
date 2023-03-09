@@ -6,11 +6,11 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 
 function generateRandomString(length) {
-  const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   const charactersLength = characters.length;
-  for ( let i = 0; i < length; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return result;
 };
@@ -44,10 +44,10 @@ app.get("/urls", (req, res) => {
   if (req.cookies) {
     usernameTemp = req.cookies["username"];
   }
-  const templateVars = { 
-    urls: urlDatabase, 
+  const templateVars = {
+    urls: urlDatabase,
     username: usernameTemp
-   };
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -68,8 +68,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { 
-    id: req.params.id, 
+  const templateVars = {
+    id: req.params.id,
     longURL: urlDatabase[req.params.id],
     username: req.cookies["username"]
   };
@@ -78,12 +78,12 @@ app.get("/urls/:id", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL;
-  res.redirect("/urls"); 
+  res.redirect("/urls");
 })
 
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
-  res.redirect("/urls"); 
+  res.redirect("/urls");
 })
 
 app.get("/u/:id", (req, res) => {
@@ -101,7 +101,7 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/logout", (req, res)=>{
+app.post("/logout", (req, res) => {
   res.clearCookie("username")
   res.redirect("/urls");
 });
