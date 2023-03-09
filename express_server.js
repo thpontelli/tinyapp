@@ -73,6 +73,17 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+// app.get("/login", (req, res)=>{
+//   res.render("login");
+// });
+
+app.post("/login", (req, res) => {
+  console.log(req.body);
+  res.cookie("username", req.body.Username);
+  res.redirect("/urls");
+})
+
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
