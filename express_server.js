@@ -24,6 +24,7 @@ const getUserByEmail = function(email) {
   return null;
 };
 
+// If a cookie exists return the user object, otherwise return undefined.
 const getUserFromCookie = function(req) {
   if (req.cookies) {
     return users[req.cookies["user_id"]];
@@ -100,10 +101,13 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
+  // Check if the email and password have been entered.
   if (req.body.email && req.body.password) {
     let user = getUserByEmail(req.body.email);
+    // check if the user exists in database.
     if (user !== null) {
       res.status(400).send("Email is already used!");
+    // All checks passed, user can be created.
     } else {
       let randomId = generateRandomString(8);
       users[randomId] = {
@@ -114,8 +118,9 @@ app.post("/register", (req, res) => {
       res.cookie("user_id", randomId);
       res.redirect("/urls");
     }
+  // Email or password is blank.
   } else {
-    res.status(400).send('Email or password are blank!');
+    res.status(400).send('Email or password is blank!');
   }
 });
 
@@ -153,9 +158,12 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+  // check if the email and password have been entered.
   if (req.body.email && req.body.password) {
     let user = getUserByEmail(req.body.email);
+    // check if user exists.
     if (user !== null) {
+      // if user exists and the password matches, proceed with login.
       if (req.body.password === users[user].password) {
         res.cookie("user_id", user);
         res.redirect("/urls");
@@ -166,7 +174,7 @@ app.post("/login", (req, res) => {
       res.status(403).send('User not found!');
     }
   } else {
-    res.status(400).send('Email or password are blank!');
+    res.status(400).send('Email or password is blank!');
   }
 });
 
