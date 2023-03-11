@@ -104,6 +104,20 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+app.get("/register", (req, res)=>{
+  let usernameTemp = undefined;
+  console.log(req.cookies);
+  if (req.cookies) {
+    usernameTemp = req.cookies["user_id"];
+  }
+
+  const templateVars = {
+    urls: urlDatabase,
+    user: users.usernameTemp
+  };
+  res.render("urls_register", templateVars);
+});
+
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
@@ -118,6 +132,7 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 })
 
+
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
@@ -128,17 +143,6 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
-app.get("/register", (req, res)=>{
-  let usernameTemp = undefined;
-  if (req.cookies) {
-    usernameTemp = req.cookies["user_id"];
-  }
-  const templateVars = {
-    urls: urlDatabase,
-    user: users.usernameTemp
-  };
-  res.render("urls_register", templateVars);
-});
 
 app.post("/register", (req, res) => {
   if (req.body.email && req.body.password) {
@@ -161,6 +165,20 @@ app.post("/register", (req, res) => {
     res.status(400).send('Email or password are blank!')
   }
 })
+
+app.get("/login", (req, res) => {
+  let usernameTemp = undefined;
+  if (req.cookies) {
+    usernameTemp = req.cookies["user_id"];
+  }
+
+  const templateVars = {
+    urls: urlDatabase,
+    user: users.usernameTemp
+  };
+  res.render("urls_login", templateVars);
+})
+
 
 app.post("/login", (req, res) => {
   //console.log(req.body);
