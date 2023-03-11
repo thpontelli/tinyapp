@@ -55,11 +55,23 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   let usernameTemp = undefined;
   if (req.cookies) {
-    usernameTemp = req.cookies["username"];
+    usernameTemp = req.cookies["user_id"];
   }
+
+  let user = undefined;
+  if (usernameTemp) {
+    user = users[usernameTemp]
+  };
+
+  console.log("UsernameTemp", usernameTemp);
+  console.log("req.cookies", req.cookies);
+  console.log("users", users);
+  console.log("user", user);
+
+
   const templateVars = {
     urls: urlDatabase,
-    username: usernameTemp
+    user: user
   };
   res.render("urls_index", templateVars);
 });
@@ -74,8 +86,13 @@ app.post("/urls", (req, res) => {
 
 
 app.get("/urls/new", (req, res) => {
+  let user = undefined;
+  if (req.cookies) {
+    user = users[req.cookies["user_id"]]
+  }
+
   const templateVars = {
-    username: req.cookies["username"]
+    user: user
   }
   res.render("urls_new", templateVars);
 });
@@ -84,7 +101,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"]
+    user: users.req.cookies["user_id"]
   };
   res.render("urls_show", templateVars);
 });
@@ -107,11 +124,11 @@ app.get("/u/:id", (req, res) => {
 app.get("/register", (req, res)=>{
   let usernameTemp = undefined;
   if (req.cookies) {
-    usernameTemp = req.cookies["username"];
+    usernameTemp = req.cookies["user_id"];
   }
   const templateVars = {
     urls: urlDatabase,
-    username: usernameTemp
+    user: users.usernameTemp
   };
   res.render("urls_register", templateVars);
 });
@@ -130,12 +147,12 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
   console.log(req.body);
-  res.cookie("username", req.body.Username);
+  res.cookie("user_id", req.body.user.id);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username")
+  res.clearCookie("user_id")
   res.redirect("/urls");
 });
 
