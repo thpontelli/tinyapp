@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -14,13 +15,14 @@
 
 <body>
   <%- include('partials/_header') %>
-  <h1>Login Page</h1>
+    <h3>Login Page</h3>
     <form action="/login" method="POST">
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email"/>
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password"/>
-        <input type="submit" value="Login"/>
+      <label for="email">Email:</label>
+      <input type="email" name="email" id="email" />
+      <label for="password">Password:</label>
+      <input type="password" name="password" id="password" />
+      <button type="submit" class="btn btn-primary">Login</button>
     </form>
 </body>
+
 </html>
