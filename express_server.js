@@ -14,8 +14,15 @@ function generateRandomString(length) {
   }
   return result;
 };
-//console.log(generateRandomString(6));
 
+function getUserByEmail(email) {
+  for (let user in users) {
+    if (email === users[user].email) {
+      return user
+    } 
+  }
+  return null 
+};
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -63,10 +70,10 @@ app.get("/urls", (req, res) => {
     user = users[usernameTemp]
   };
 
-  console.log("UsernameTemp", usernameTemp);
-  console.log("req.cookies", req.cookies);
-  console.log("users", users);
-  console.log("user", user);
+  //console.log("UsernameTemp", usernameTemp);
+  //console.log("req.cookies", req.cookies);
+  //console.log("users", users);
+  //console.log("user", user);
 
 
   const templateVars = {
@@ -77,7 +84,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
+  //console.log(req.body); // Log the POST request body to the console
   //res.send("Ok"); // Respond with 'Ok' (we will replace this)
   let key = generateRandomString(6);
   urlDatabase[key] = req.body.longURL;
@@ -134,19 +141,29 @@ app.get("/register", (req, res)=>{
 });
 
 app.post("/register", (req, res) => {
-  let randomId = generateRandomString(8);
-  users[randomId] = {
-    id: randomId,
-    email: req.body.email,
-    password: req.body.password
+  if (req.body.email && req.body.password) {
+    let user = getUserByEmail(req.body.email);
+    console.log(user);
+    if (user !== null) {
+      res.status(400).send("Email is already used!")
+    } else {
+      let randomId = generateRandomString(8);
+      users[randomId] = {
+        id: randomId,
+        email: req.body.email,
+        password: req.body.password
+      }
+      res.cookie("user_id", randomId);
+      //console.log(users);
+      res.redirect("/urls");
+    }
+  } else {
+    res.status(400).send('Email or password are blank!')
   }
-  res.cookie("user_id", randomId);
-  console.log(users);
-  res.redirect("/urls");
 })
 
 app.post("/login", (req, res) => {
-  console.log(req.body);
+  //console.log(req.body);
   res.cookie("user_id", req.body.user.id);
   res.redirect("/urls");
 });
