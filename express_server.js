@@ -22,6 +22,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  thiago: {
+    id: "thiago",
+    email: "thiagoteste@gmail.com",
+    password: "123"
+  },
+  robson: {
+    id: "robson",
+    email: "robsonteste@gmail.com",
+    password: "456"
+  }
+}
+
 //middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -91,9 +104,29 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
-// app.get("/login", (req, res)=>{
-//   res.render("login");
-// });
+app.get("/register", (req, res)=>{
+  let usernameTemp = undefined;
+  if (req.cookies) {
+    usernameTemp = req.cookies["username"];
+  }
+  const templateVars = {
+    urls: urlDatabase,
+    username: usernameTemp
+  };
+  res.render("urls_register", templateVars);
+});
+
+app.post("/register", (req, res) => {
+  let randomId = generateRandomString(8);
+  users[randomId] = {
+    id: randomId,
+    email: req.body.email,
+    password: req.body.password
+  }
+  res.cookie("user_id", randomId);
+  console.log(users);
+  res.redirect("/urls");
+})
 
 app.post("/login", (req, res) => {
   console.log(req.body);
