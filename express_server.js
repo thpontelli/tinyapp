@@ -4,41 +4,14 @@ const app = express();
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const PORT = 8080; // default port 8080
+const { 
+  generateRandomString, 
+  getUserByEmail, 
+  getUserFromCookie, 
+  getURLbyShortener } = require("./helpers");
+
 
 app.set("view engine", "ejs");
-
-const generateRandomString = function(length) {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  const charactersLength = characters.length;
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-};
-
-const getUserByEmail = function(email) {
-  for (let user in users) {
-    if (email === users[user].email) {
-      return user;
-    }
-  }
-  return null;
-};
-
-// If a cookie exists return the user object, otherwise return undefined.
-const getUserFromCookie = function(req) {
-  if (req.session) {
-    return users[req.session.user_id];
-  }
-};
-
-// If a shortener exists in urlDatabase return the object, otherwise 
-// return undefined.
-const getURLbyShortener = function(shortener) {
-    return urlDatabase[shortener];
-};
-
 
 const urlDatabase = {
   "b2xVn2": {
@@ -110,11 +83,11 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  if (getUserFromCookie(req)) {
+  if (getUserFromCookie(req, users)) {
     if (urlsForUser(req.session.user_id)) {
       const templateVars = {
         urls: urlsForUser(req.session.user_id),
-        user: getUserFromCookie(req)
+        user: getUserFromCookie(req, users)
       };
       res.render("urls_index", templateVars);        
     }
@@ -124,7 +97,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  if (getUserFromCookie(req)) {
+  if (getUserFromCookie(req, users)) {
     let key = generateRandomString(6);
     urlDatabase[key] = {};
     urlDatabase[key].longURL = req.body.longURL;
@@ -138,9 +111,9 @@ app.post("/urls", (req, res) => {
 
 
 app.get("/urls/new", (req, res) => {
-  if (getUserFromCookie(req)) {
+  if (getUserFromCookie(req, users)) {
     const templateVars = {
-      user: getUserFromCookie(req)
+      user: getUserFromCookie(req, users)
     };
     res.render("urls_new", templateVars);
   } else {
@@ -149,12 +122,12 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  if (getUserFromCookie(req)) {
+  if (getUserFromCookie(req, users)) {
     res.redirect("/urls");
   } else {
     const templateVars = {
       urls: urlDatabase,
-      user: getUserFromCookie(req)
+      user: getUserFromCookie(req, users)
     };
     res.render("urls_register", templateVars);
   }
@@ -163,7 +136,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   // Check if the email and password have been entered.
   if (req.body.email && req.body.password) {
-    let user = getUserByEmail(req.body.email);
+    let user = getUserByEmail(req.body.email, users);
     // check if the user exists in database.
     if (user !== null) {
       res.status(400).send("Email is already used!");
@@ -188,7 +161,7 @@ app.post("/register", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   if (req.params.id in urlDatabase) { 
-    if (getUserFromCookie(req)) {
+    if (getUserFromCookie(req, users)) {
       // console.log(req.params.id)
       // console.log(getUserFromCookie(req));
       // console.log(urlsForUser(req.cookies["user_id"]));
@@ -197,7 +170,7 @@ app.get("/urls/:id", (req, res) => {
         const templateVars = {
           id: req.params.id,
           longURL: urlDatabase[req.params.id].longURL,
-          user: getUserFromCookie(req)
+          user: getUserFromCookie(req, users)
         };
         res.render("urls_show", templateVars);    
       } else {
@@ -215,7 +188,7 @@ app.post("/urls/:id", (req, res) => {
   console.log(req.params.id);
   console.log(urlDatabase);
   if (req.params.id in urlDatabase) {
-    if (getUserFromCookie(req)) {
+    if (getUserFromCookie(req, users)) {
       if (req.params.id in urlsForUser(req.session.user_id)) {
         urlDatabase[req.params.id].longURL = req.body.longURL;
         res.redirect("/urls");
@@ -233,7 +206,7 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   if (req.params.id in urlDatabase) {
-    if (getUserFromCookie(req)) {
+    if (getUserFromCookie(req, users)) {
       if (req.params.id in urlsForUser(req.session.user_id)) {
         delete urlDatabase[req.params.id];
         res.redirect("/urls");
@@ -249,7 +222,7 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  if (getURLbyShortener(req.params.id)) {
+  if (getURLbyShortener(req.params.id, urlDatabase)) {
     res.redirect(urlDatabase[req.params.id].longURL);
   } else {
     res.status(400).send("This shortener doesn't exist in our database!")
@@ -257,12 +230,12 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  if (getUserFromCookie(req)) {
+  if (getUserFromCookie(req, users)) {
     res.redirect("/urls");
   } else {
     const templateVars = {
       urls: urlDatabase,
-      user: getUserFromCookie(req)
+      user: getUserFromCookie(req, users)
     };
     res.render("urls_login", templateVars);
   }
@@ -271,7 +244,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   // check if the email and password have been entered.
   if (req.body.email && req.body.password) {
-    let user = getUserByEmail(req.body.email);
+    let user = getUserByEmail(req.body.email, users);
     // check if user exists.
     if (user !== null) {
       // if user exists and the password matches, proceed with login.
