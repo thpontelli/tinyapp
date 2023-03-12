@@ -34,29 +34,55 @@ const getUserFromCookie = function(req) {
 // If a shortener exists in urlDatabase return the object, otherwise 
 // return undefined.
 const getURLbyShortener = function(shortener) {
-  //if (urlDatabase[shortener]) {
     return urlDatabase[shortener];
-  //}
-}
+};
 
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "aJ48lW",
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "aJ48lW",
+  },
+  "b6UTxQ": {
+    longURL: "https://www.tsn.ca",
+    userID: "f5htYs",
+  },
+  "i3BoGr": {
+    longURL: "https://www.google.ca",
+    userID: "f5htYs",
+  },
 };
 
 const users = {
-  thiago: {
+  "aJ48lW": {
     id: "thiago",
     email: "thiagoteste@gmail.com",
     password: "123"
   },
-  robson: {
+  "f5htYs": {
     id: "robson",
     email: "robsonteste@gmail.com",
     password: "456"
   }
 };
+
+const urlsForUser = function(id) {
+  let urlTempDB = {};
+
+  for (item in urlDatabase) {
+    if (id === urlDatabase[item].userID) {
+      //console.log(item);
+      urlTempDB[item] = urlDatabase[item]
+    }
+  }
+  return urlTempDB
+};
+
+console.log(urlsForUser("aJ48lW"));
 
 //middleware
 app.use(express.urlencoded({ extended: true }));
@@ -76,17 +102,26 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    user: getUserFromCookie(req)
-  };
-  res.render("urls_index", templateVars);
+  if (getUserFromCookie(req)) {
+    if (urlsForUser(req.cookies["user_id"])) {
+      const templateVars = {
+        urls: urlsForUser(req.cookies["user_id"]),
+        user: getUserFromCookie(req)
+      };
+      res.render("urls_index", templateVars);        
+    }
+  } else {
+    res.status(403).send('User is not logged in!');
+  }
 });
 
 app.post("/urls", (req, res) => {
   if (getUserFromCookie(req)) {
     let key = generateRandomString(6);
-    urlDatabase[key] = req.body.longURL;
+    urlDatabase[key] = {};
+    urlDatabase[key].longURL = req.body.longURL;
+    urlDatabase[key].userID = req.cookies["user_id"];
+    console.log(urlDatabase);
     res.redirect(`/urls/${key}`);
   } else {
     res.status(403).send('User is not logged in!');
@@ -126,7 +161,7 @@ app.post("/register", (req, res) => {
       res.status(400).send("Email is already used!");
     // All checks passed, user can be created.
     } else {
-      let randomId = generateRandomString(8);
+      let randomId = generateRandomString(6);
       users[randomId] = {
         id: randomId,
         email: req.body.email,
@@ -142,28 +177,70 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    user: getUserFromCookie(req)
-  };
-  res.render("urls_show", templateVars);
+  if (req.params.id in urlDatabase) { 
+    if (getUserFromCookie(req)) {
+      // console.log(req.params.id)
+      // console.log(getUserFromCookie(req));
+      // console.log(urlsForUser(req.cookies["user_id"]));
+      // console.log(urlDatabase[req.params.id].longURL);
+      if (req.params.id in urlsForUser(req.cookies["user_id"])) {
+        const templateVars = {
+          id: req.params.id,
+          longURL: urlDatabase[req.params.id].longURL,
+          user: getUserFromCookie(req)
+        };
+        res.render("urls_show", templateVars);    
+      } else {
+        res.status(403).send("This URL doens't belong to you!")
+      }
+    } else {
+      res.status(403).send('User is not logged in!');
+    }
+  } else {
+    res.status(404).send("This page doesn't exist");
+  }
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
-  res.redirect("/urls");
+  console.log(req.params.id);
+  console.log(urlDatabase);
+  if (req.params.id in urlDatabase) {
+    if (getUserFromCookie(req)) {
+      if (req.params.id in urlsForUser(req.cookies["user_id"])) {
+        urlDatabase[req.params.id].longURL = req.body.longURL;
+        res.redirect("/urls");
+      } else {
+        res.status(403).send("This URL doesn't belong to you!")
+      }
+    } else {
+      res.status(403).send('User is not logged in!');
+    }
+  } else {
+   res.status(404).send("This page doesn't exist");
+  }
 });
 
 
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect("/urls");
+  if (req.params.id in urlDatabase) {
+    if (getUserFromCookie(req)) {
+      if (req.params.id in urlsForUser(req.cookies["user_id"])) {
+        delete urlDatabase[req.params.id];
+        res.redirect("/urls");
+      } else {
+        res.status(403).send("This URL doesn't belong to you!");
+      }
+    } else {
+      res.status(403).send('User is not logged in!'); 
+    }
+  } else {
+    res.status(404).send("This page doesn't exist");
+  }
 });
 
 app.get("/u/:id", (req, res) => {
   if (getURLbyShortener(req.params.id)) {
-    res.redirect(urlDatabase[req.params.id]);
+    res.redirect(urlDatabase[req.params.id].longURL);
   } else {
     res.status(400).send("This shortener doesn't exist in our database!")
   }
