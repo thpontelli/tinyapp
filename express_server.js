@@ -31,6 +31,15 @@ const getUserFromCookie = function(req) {
   }
 };
 
+// If a shortener exists in urlDatabase return the object, otherwise 
+// return undefined.
+const getURLbyShortener = function(shortener) {
+  //if (urlDatabase[shortener]) {
+    return urlDatabase[shortener];
+  //}
+}
+
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -75,29 +84,37 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  let key = generateRandomString(6);
-  urlDatabase[key] = req.body.longURL;
-  res.redirect(`/urls/${key}`);
+  if (getUserFromCookie(req)) {
+    let key = generateRandomString(6);
+    urlDatabase[key] = req.body.longURL;
+    res.redirect(`/urls/${key}`);
+  } else {
+    res.status(403).send('User is not logged in!');
+  }
 });
 
 
 app.get("/urls/new", (req, res) => {
-  let user = undefined;
-  if (req.cookies) {
-    user = users[req.cookies["user_id"]];
+  if (getUserFromCookie(req)) {
+    const templateVars = {
+      user: getUserFromCookie(req)
+    };
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
   }
-  const templateVars = {
-    user: user
-  };
-  res.render("urls_new", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    user: getUserFromCookie(req)
-  };
-  res.render("urls_register", templateVars);
+  if (getUserFromCookie(req)) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = {
+      urls: urlDatabase,
+      user: getUserFromCookie(req)
+    };
+    res.render("urls_register", templateVars);
+  }
 });
 
 app.post("/register", (req, res) => {
@@ -145,16 +162,23 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
+  if (getURLbyShortener(req.params.id)) {
+    res.redirect(urlDatabase[req.params.id]);
+  } else {
+    res.status(400).send("This shortener doesn't exist in our database!")
+  }
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    user: getUserFromCookie(req)
-  };
-  res.render("urls_login", templateVars);
+  if (getUserFromCookie(req)) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = {
+      urls: urlDatabase,
+      user: getUserFromCookie(req)
+    };
+    res.render("urls_login", templateVars);
+  }
 });
 
 app.post("/login", (req, res) => {
