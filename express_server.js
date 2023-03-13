@@ -1,13 +1,12 @@
 const express = require("express");
 const app = express();
-//const cookieParser = require("cookie-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const PORT = 8080; // default port 8080
-const { 
-  generateRandomString, 
-  getUserByEmail, 
-  getUserFromCookie, 
+const {
+  generateRandomString,
+  getUserByEmail,
+  getUserFromCookie,
   getURLbyShortener } = require("./helpers");
 
 
@@ -48,27 +47,23 @@ const users = {
 const urlsForUser = function(id) {
   let urlTempDB = {};
 
-  for (item in urlDatabase) {
+  for (let item in urlDatabase) {
     if (id === urlDatabase[item].userID) {
-      //console.log(item);
-      urlTempDB[item] = urlDatabase[item]
+      urlTempDB[item] = urlDatabase[item];
     }
   }
-  return urlTempDB
+  return urlTempDB;
 };
-
-console.log(urlsForUser("aJ48lW"));
 
 //middleware
 app.use(express.urlencoded({ extended: true }));
-//app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
   keys: ['tinyApp'],
 
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
+}));
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -89,7 +84,7 @@ app.get("/urls", (req, res) => {
         urls: urlsForUser(req.session.user_id),
         user: getUserFromCookie(req, users)
       };
-      res.render("urls_index", templateVars);        
+      res.render("urls_index", templateVars);
     }
   } else {
     res.status(403).send('User is not logged in!');
@@ -102,7 +97,6 @@ app.post("/urls", (req, res) => {
     urlDatabase[key] = {};
     urlDatabase[key].longURL = req.body.longURL;
     urlDatabase[key].userID = req.session.user_id;
-    console.log(urlDatabase);
     res.redirect(`/urls/${key}`);
   } else {
     res.status(403).send('User is not logged in!');
@@ -140,7 +134,7 @@ app.post("/register", (req, res) => {
     // check if the user exists in database.
     if (user !== null) {
       res.status(400).send("Email is already used!");
-    // All checks passed, user can be created.
+      // All checks passed, user can be created.
     } else {
       let randomId = generateRandomString(6);
       users[randomId] = {
@@ -148,33 +142,27 @@ app.post("/register", (req, res) => {
         email: req.body.email,
         password: bcrypt.hashSync(req.body.password, 10),
       };
-      console.log(users);
-      //res.cookie("user_id", randomId);
       req.session.user_id = randomId;
       res.redirect("/urls");
     }
-  // Email or password is blank.
+    // Email or password is blank.
   } else {
     res.status(400).send('Email or password is blank!');
   }
 });
 
 app.get("/urls/:id", (req, res) => {
-  if (req.params.id in urlDatabase) { 
+  if (req.params.id in urlDatabase) {
     if (getUserFromCookie(req, users)) {
-      // console.log(req.params.id)
-      // console.log(getUserFromCookie(req));
-      // console.log(urlsForUser(req.cookies["user_id"]));
-      // console.log(urlDatabase[req.params.id].longURL);
       if (req.params.id in urlsForUser(req.session.user_id)) {
         const templateVars = {
           id: req.params.id,
           longURL: urlDatabase[req.params.id].longURL,
           user: getUserFromCookie(req, users)
         };
-        res.render("urls_show", templateVars);    
+        res.render("urls_show", templateVars);
       } else {
-        res.status(403).send("This URL doens't belong to you!")
+        res.status(403).send("This URL doens't belong to you!");
       }
     } else {
       res.status(403).send('User is not logged in!');
@@ -185,21 +173,19 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  console.log(req.params.id);
-  console.log(urlDatabase);
   if (req.params.id in urlDatabase) {
     if (getUserFromCookie(req, users)) {
       if (req.params.id in urlsForUser(req.session.user_id)) {
         urlDatabase[req.params.id].longURL = req.body.longURL;
         res.redirect("/urls");
       } else {
-        res.status(403).send("This URL doesn't belong to you!")
+        res.status(403).send("This URL doesn't belong to you!");
       }
     } else {
       res.status(403).send('User is not logged in!');
     }
   } else {
-   res.status(404).send("This page doesn't exist");
+    res.status(404).send("This page doesn't exist");
   }
 });
 
@@ -214,7 +200,7 @@ app.post("/urls/:id/delete", (req, res) => {
         res.status(403).send("This URL doesn't belong to you!");
       }
     } else {
-      res.status(403).send('User is not logged in!'); 
+      res.status(403).send('User is not logged in!');
     }
   } else {
     res.status(404).send("This page doesn't exist");
@@ -225,7 +211,7 @@ app.get("/u/:id", (req, res) => {
   if (getURLbyShortener(req.params.id, urlDatabase)) {
     res.redirect(urlDatabase[req.params.id].longURL);
   } else {
-    res.status(400).send("This shortener doesn't exist in our database!")
+    res.status(400).send("This shortener doesn't exist in our database!");
   }
 });
 
@@ -249,7 +235,6 @@ app.post("/login", (req, res) => {
     if (user !== null) {
       // if user exists and the password matches, proceed with login.
       if (bcrypt.compareSync(req.body.password, users[user].password)) {
-        //res.cookie("user_id", user);
         req.session.user_id = user;
         res.redirect("/urls");
       } else {
@@ -264,7 +249,6 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  //res.clearCookie("user_id");
   req.session = null;
   res.redirect("/login");
 });

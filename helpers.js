@@ -24,18 +24,18 @@ const getUserFromCookie = function(req, userDB) {
   }
 };
 
-// If a shortener exists in urlDatabase return the object, otherwise 
+// If a shortener exists in urlDatabase return the object, otherwise
 // return undefined.
 const getURLbyShortener = function(shortener, urlDB) {
-    return urlDB[shortener];
+  return urlDB[shortener];
 };
 
 
 
 
-module.exports = { 
-  generateRandomString, 
-  getUserByEmail, 
-  getUserFromCookie, 
-  getURLbyShortener 
-} 
+module.exports = {
+  generateRandomString,
+  getUserByEmail,
+  getUserFromCookie,
+  getURLbyShortener
+};
